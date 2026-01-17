@@ -1,0 +1,5 @@
+.env
+node_modules/
+Alexa-Shopping-List/.venv/
+Alexa-Shopping-List/cookie_data/
+*.log

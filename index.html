@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Smart Home</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="cyber-grid">
+      <!-- Hero Clock Section -->
+      <div class="card clock-card hero-card">
+        <div class="card-glow"></div>
+        <div class="time" id="time">00:00:00</div>
+        <div class="date" id="date">Monday, January 1, 2024</div>
+      </div>
+
+      <!-- Weather Card -->
+      <div class="card weather-card">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <span class="icon-badge">🌡️</span>
+          <div class="weather-title">Weather - Paris</div>
+        </div>
+        <div class="weather-main">
+          <div>
+            <div class="temp" id="temp">--°</div>
+            <div class="temp-minmax" id="temp-minmax">-- / --</div>
+            <div class="weather-desc" id="weather-desc">Loading...</div>
+          </div>
+          <div class="weather-icon" id="weather-icon">☀️</div>
+        </div>
+        <div class="weather-forecast" id="weather-forecast"></div>
+      </div>
+
+      <!-- Calendar Card -->
+      <div class="card calendar-card">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <span class="icon-badge">📅</span>
+          <div class="calendar-title">Upcoming Events</div>
+        </div>
+        <div class="calendar-events" id="calendar-events"></div>
+      </div>
+
+      <!-- Stock Card -->
+      <div class="card stock-card">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <span class="icon-badge">📈</span>
+          <div class="stock-title">Market Watch</div>
+        </div>
+        <div id="stocks">
+          <div class="stock-item">
+            <div class="stock-info">
+              <span class="stock-name">LVMH Moët Hennessy</span>
+              <span class="stock-symbol">MC.PA</span>
+            </div>
+            <div class="stock-values">
+              <span class="stock-price" id="lvmh-price">--</span>
+              <span class="stock-change" id="lvmh-change">--</span>
+            </div>
+          </div>
+          <div class="stock-item">
+            <div class="stock-info">
+              <span class="stock-name">Davide Campari-Milano</span>
+              <span class="stock-symbol">CPR.MI</span>
+            </div>
+            <div class="stock-values">
+              <span class="stock-price" id="campari-price">--</span>
+              <span class="stock-change" id="campari-change">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shopping Card -->
+      <div class="card shopping-card">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <span class="icon-badge">🛒</span>
+          <div class="shopping-title">Shopping List</div>
+        </div>
+        <div class="shopping-grid" id="shopping-list"></div>
+      </div>
+    </div>
+
+    <script>
+      var events = [
+        {
+          date: "Monday Jan 20",
+          time: "14:00",
+          description: "Team standup meeting",
+        },
+        {
+          date: "Tuesday Jan 21",
+          time: "10:00",
+          description: "Client presentation",
+        },
+        {
+          date: "Wednesday Jan 22",
+          time: "09:00",
+          description: "Product launch review",
+        },
+        {
+          date: "Thursday Jan 23",
+          time: "19:00",
+          description: "Concert at Opera House",
+        },
+      ];
+
+      // Shopping list - CUSTOMIZE HERE
+      var shoppingItems = [
+        "Milk",
+        "Bread",
+        "Eggs",
+        "Tomatoes",
+        "Pasta",
+        "Cheese",
+        "Apples",
+        "Coffee",
+        "Olive Oil",
+        "Butter",
+        "Chicken Breast",
+        "Rice",
+        "Bananas",
+        "Yogurt",
+        "Orange Juice",
+        "Salmon",
+        "Spinach",
+        "Potatoes",
+        "Carrots",
+        "Onions",
+      ];
+
+      // Day and month names
+      var days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      var months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      // Weather icons
+      var weatherIcons = {
+        Clear: "☀️",
+        Clouds: "☁️",
+        Rain: "🌧️",
+        Drizzle: "🌦️",
+        Snow: "❄️",
+        Thunderstorm: "⛈️",
+        Mist: "🌫️",
+        Fog: "🌫️",
+      };
+
+      // API keys object
+      var API_KEYS = {
+        openWeather: null,
+      };
+
+      // Load configurations (API keys) from proxy
+      function loadConfig() {
+        return fetch("http://" + window.location.hostname + ":3030/config")
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (config) {
+            API_KEYS.openWeather = config.openWeatherApiKey;
+            return config;
+          })
+          .catch(function (error) {
+            console.error("Error loading configuration:", error);
+          });
+      }
+
+      function updateClock() {
+        var now = new Date();
+        var hours = now.getHours().toString();
+        var minutes = now.getMinutes().toString();
+        var seconds = now.getSeconds().toString();
+        if (hours.length === 1) hours = "0" + hours;
+        if (minutes.length === 1) minutes = "0" + minutes;
+        if (seconds.length === 1) seconds = "0" + seconds;
+        document.getElementById("time").textContent =
+          hours + ":" + minutes + ":" + seconds;
+
+        var day = days[now.getDay()];
+        var dayNumber = now.getDate();
+        var month = months[now.getMonth()];
+        var year = now.getFullYear();
+        document.getElementById("date").textContent =
+          day + ", " + dayNumber + " " + month + " " + year;
+      }
+
+      function parseICalDate(dateStr) {
+        // Parse YYYYMMDDTHHMMSS or YYYYMMDD format
+        var year = parseInt(dateStr.substr(0, 4));
+        var month = parseInt(dateStr.substr(4, 2)) - 1;
+        var day = parseInt(dateStr.substr(6, 2));
+        var hour = dateStr.length > 8 ? parseInt(dateStr.substr(9, 2)) : 0;
+        var minute = dateStr.length > 8 ? parseInt(dateStr.substr(11, 2)) : 0;
+        return new Date(year, month, day, hour, minute);
+      }
+
+      function formatEventDate(date) {
+        var shortDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        var shortMonths = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        return (
+          shortDays[date.getDay()] +
+          " " +
+          date.getDate() +
+          " " +
+          shortMonths[date.getMonth()]
+        );
+      }
+
+      function formatEventTime(date) {
+        var h = date.getHours().toString();
+        var m = date.getMinutes().toString();
+        if (h.length === 1) h = "0" + h;
+        if (m.length === 1) m = "0" + m;
+        return h + ":" + m;
+      }
+
+      function loadCalendarEvents() {
+        var container = document.getElementById("calendar-events");
+
+        // Use local proxy to avoid CORS issues
+        fetch("http://" + window.location.hostname + ":3030/calendar")
+          .then(function (response) {
+            return response.text();
+          })
+          .then(function (icsData) {
+            var parsedEvents = [];
+            var lines = icsData.split(/\r?\n/);
+            var currentEvent = null;
+            var now = new Date();
+
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i].trim();
+
+              if (line === "BEGIN:VEVENT") {
+                currentEvent = {};
+              } else if (line === "END:VEVENT" && currentEvent) {
+                if (currentEvent.start && currentEvent.summary) {
+                  var eventDate = parseICalDate(currentEvent.start);
+                  if (eventDate >= now) {
+                    parsedEvents.push({
+                      date: eventDate,
+                      dateStr: formatEventDate(eventDate),
+                      time: formatEventTime(eventDate),
+                      description: currentEvent.summary,
+                    });
+                  }
+                }
+                currentEvent = null;
+              } else if (currentEvent) {
+                if (line.indexOf("DTSTART") === 0) {
+                  var value = line.split(":")[1];
+                  currentEvent.start = value;
+                } else if (line.indexOf("SUMMARY:") === 0) {
+                  currentEvent.summary = line.substring(8);
+                }
+              }
+            }
+
+            // Order by date
+            parsedEvents.sort(function (a, b) {
+              return a.date - b.date;
+            });
+
+            // Show up to 4 events
+            container.innerHTML = "";
+            var maxEvents = Math.min(parsedEvents.length, 5);
+            for (var j = 0; j < maxEvents; j++) {
+              var event = parsedEvents[j];
+              var eventDiv = document.createElement("div");
+              eventDiv.className = "event-item";
+
+              var dateDiv = document.createElement("div");
+              dateDiv.className = "event-date";
+              dateDiv.textContent = event.dateStr;
+
+              var timeDiv = document.createElement("div");
+              timeDiv.className = "event-time";
+              timeDiv.textContent = event.time;
+
+              var descDiv = document.createElement("div");
+              descDiv.className = "event-description";
+              descDiv.textContent = event.description;
+
+              eventDiv.appendChild(dateDiv);
+              eventDiv.appendChild(timeDiv);
+              eventDiv.appendChild(descDiv);
+              container.appendChild(eventDiv);
+            }
+
+            if (parsedEvents.length === 0) {
+              container.innerHTML =
+                '<div style="padding: 20px; text-align: center; opacity: 0.7;">No scheduled events</div>';
+            }
+          })
+          .catch(function (error) {
+            console.log("Error loading calendar:", error);
+            container.innerHTML =
+              '<div style="padding: 20px; text-align: center; opacity: 0.7;">Error loading calendar</div>';
+          });
+      }
+
+      function updateWeather() {
+        if (!API_KEYS.openWeather) {
+          console.error("API key not available");
+          return;
+        }
+
+        // Current weather
+        fetch(
+          "https://api.openweathermap.org/data/2.5/weather?q=Paris&appid=" +
+            API_KEYS.openWeather +
+            "&units=metric&lang=en",
+        )
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            document.getElementById("temp").textContent =
+              Math.round(data.main.temp) + "°";
+            document.getElementById("temp-minmax").textContent =
+              Math.round(data.main.temp_min) +
+              "° / " +
+              Math.round(data.main.temp_max) +
+              "°";
+            document.getElementById("weather-icon").textContent =
+              weatherIcons[data.weather[0].main] || "☀️";
+            document.getElementById("weather-desc").textContent =
+              data.weather[0].description;
+          })
+          .catch(function (error) {
+            console.log("Error loading weather:", error);
+            document.getElementById("temp").textContent = "--°";
+            document.getElementById("weather-desc").textContent =
+              "Loading error";
+          });
+
+        // 4-day forecast
+        fetch(
+          "https://api.openweathermap.org/data/2.5/forecast?q=Paris&appid=" +
+            API_KEYS.openWeather +
+            "&units=metric&lang=en",
+        )
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            var dailyForecasts = {};
+
+            // Group by day and calculate min/max
+            for (var i = 0; i < data.list.length; i++) {
+              var item = data.list[i];
+              var date = new Date(item.dt * 1000);
+              var dayKey = date.toLocaleDateString("en-US", {
+                weekday: "short",
+              });
+
+              if (!dailyForecasts[dayKey]) {
+                dailyForecasts[dayKey] = {
+                  day: dayKey,
+                  temps: [],
+                  weather: item.weather[0].main,
+                  date: date,
+                };
+              }
+              dailyForecasts[dayKey].temps.push(item.main.temp);
+            }
+
+            // Convert to array and take the next 4 days
+            var forecastArray = [];
+            for (var key in dailyForecasts) {
+              var forecast = dailyForecasts[key];
+              forecastArray.push({
+                day: forecast.day,
+                min: Math.round(Math.min.apply(null, forecast.temps)),
+                max: Math.round(Math.max.apply(null, forecast.temps)),
+                weather: forecast.weather,
+                date: forecast.date,
+              });
+            }
+
+            // Sort by date and take the next 4 days
+            forecastArray.sort(function (a, b) {
+              return a.date - b.date;
+            });
+            forecastArray = forecastArray.slice(1, 5); // Skip today, take 4 days
+            // Show forecast
+            var forecastContainer = document.getElementById("weather-forecast");
+            forecastContainer.innerHTML = "";
+
+            for (var j = 0; j < forecastArray.length; j++) {
+              var fc = forecastArray[j];
+              var dayDiv = document.createElement("div");
+              dayDiv.className = "forecast-day";
+
+              var dayName = document.createElement("div");
+              dayName.className = "forecast-day-name";
+              dayName.textContent = fc.day;
+
+              var icon = document.createElement("div");
+              icon.className = "forecast-icon";
+              icon.textContent = weatherIcons[fc.weather] || "☀️";
+
+              var temps = document.createElement("div");
+              temps.className = "forecast-temps";
+              temps.textContent = fc.min + "° / " + fc.max + "°";
+
+              dayDiv.appendChild(dayName);
+              dayDiv.appendChild(icon);
+              dayDiv.appendChild(temps);
+              forecastContainer.appendChild(dayDiv);
+            }
+          })
+          .catch(function (error) {
+            console.log("Error loading forecast:", error);
+          });
+      }
+
+      function updateStocks() {
+        var stockSymbols = [
+          { id: "lvmh", symbol: "MC:EPA", name: "LVMH Moët Hennessy" },
+          { id: "campari", symbol: "CPR:MIL", name: "Davide Campari-Milano" },
+        ];
+
+        // Call Google Finance scraper via proxy for each stock
+        stockSymbols.forEach(function (stock) {
+          fetch(
+            "http://" +
+              window.location.hostname +
+              ":3030/stocks?symbol=" +
+              stock.symbol,
+          )
+            .then(function (response) {
+              return response.json();
+            })
+            .then(function (data) {
+              if (data.price && data.changePercent !== undefined) {
+                var priceEl = document.getElementById(stock.id + "-price");
+                var changeEl = document.getElementById(stock.id + "-change");
+
+                priceEl.textContent = data.price.toFixed(2);
+                changeEl.textContent =
+                  (data.changePercent >= 0 ? "+" : "") +
+                  data.changePercent.toFixed(2) +
+                  "%";
+                changeEl.className =
+                  "stock-change " +
+                  (data.changePercent >= 0 ? "positive" : "negative");
+              } else {
+                console.log("Error for " + stock.symbol + ":", data.error);
+              }
+            })
+            .catch(function (error) {
+              console.log("Error loading stocks:", error);
+            });
+        });
+      }
+
+      function loadShoppingList() {
+        var grid = document.getElementById("shopping-list");
+
+        // Load list from Alexa via proxy
+        fetch(
+          "http://" + window.location.hostname + ":3030/alexa-shopping-list",
+        )
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            grid.innerHTML = "";
+            // The proxy returns {items: ["item1", "item2", ...]}
+            var items = data.items || [];
+
+            for (var i = 0; i < Math.min(items.length, 10); i++) {
+              var div = document.createElement("div");
+              div.className = "shopping-item";
+              div.textContent = items[i];
+              grid.appendChild(div);
+            }
+
+            if (items.length === 0) {
+              grid.innerHTML =
+                '<div style="padding: 20px; text-align: center; opacity: 0.7;">Empty list</div>';
+            }
+          })
+          .catch(function (error) {
+            console.log("Error loading list:", error);
+            // Fallback to static list
+            grid.innerHTML = "";
+            for (var i = 0; i < shoppingItems.length; i++) {
+              var div = document.createElement("div");
+              div.className = "shopping-item";
+              div.textContent = shoppingItems[i];
+              grid.appendChild(div);
+            }
+          });
+      }
+
+      // Initialization
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Load configuration and then start other functions
+      loadConfig().then(function () {
+        loadCalendarEvents();
+        updateWeather();
+        updateStocks();
+        loadShoppingList();
+
+        // Automatic updates
+        setInterval(updateWeather, 600000); // Every 10 minutes
+        setInterval(updateStocks, 600000); // Every 10 minutes
+        setInterval(loadCalendarEvents, 600000); // Every 10 minutes
+        setInterval(loadShoppingList, 300000); // Every 5 minutes
+      });
+    </script>
+  </body>
+</html>

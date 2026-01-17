@@ -1,0 +1,49 @@
+services:
+  # Web server - Dashboard HTML/CSS
+  dashboard-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: dashboard-web
+    ports:
+      - "5500:80"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+  # Node.js Proxy server - CORS and API aggregation
+  dashboard-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    container_name: dashboard-proxy
+    ports:
+      - "3030:3030"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+  # Alexa Shopping List API
+  alexa-api:
+    build:
+      context: ./Alexa-Shopping-List
+      dockerfile: Dockerfile
+    container_name: alexa-api
+    ports:
+      - "8800:8800"
+    volumes:
+      - ./Alexa-Shopping-List/cookie_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8800/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+networks:
+  dashboard-network:
+    driver: bridge
