@@ -1,6 +1,22 @@
 const http = require("http");
 const https = require("https");
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+
+// Load .env file manually
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf8");
+  envContent.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const [key, ...valueParts] = trimmed.split("=");
+      if (key && valueParts.length > 0) {
+        process.env[key.trim()] = valueParts.join("=").trim();
+      }
+    }
+  });
+}
 
 const PORT = 3030;
 
@@ -9,6 +25,8 @@ const NEXTCLOUD_USERNAME = process.env.NEXTCLOUD_USERNAME;
 const NEXTCLOUD_PASSWORD = process.env.NEXTCLOUD_PASSWORD;
 const CALENDAR_URL = process.env.CALENDAR_URL;
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
+const HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
 const server = http.createServer((req, res) => {
   // Enable CORS
@@ -54,12 +72,18 @@ const server = http.createServer((req, res) => {
         res.end("Error retrieving calendar");
       });
   } else if (req.url === "/alexa-shopping-list" && req.method === "GET") {
-    // Endpoint for Alexa Shopping List API (alexa-api container)
+    // Endpoint for Home Assistant Shopping List
+    const haUrl = new URL(HOME_ASSISTANT_URL + "/api/shopping_list");
+
     const options = {
-      hostname: "alexa-api",
-      port: 8800,
-      path: "/items/all",
+      hostname: haUrl.hostname,
+      port: haUrl.port || 8123,
+      path: haUrl.pathname,
       method: "GET",
+      headers: {
+        Authorization: "Bearer " + HOME_ASSISTANT_TOKEN,
+        "Content-Type": "application/json",
+      },
     };
 
     http
@@ -72,26 +96,32 @@ const server = http.createServer((req, res) => {
 
         response.on("end", () => {
           if (response.statusCode === 200) {
-            const alexaItems = JSON.parse(data);
-            // Filter only uncompleted items and extract "value" field
-            const items = alexaItems
-              .filter((item) => !item.completed)
-              .map((item) => item.value)
+            const haItems = JSON.parse(data);
+            // Filter only uncompleted items and extract "name" field
+            const items = haItems
+              .filter((item) => !item.complete)
+              .map((item) => item.name)
               .slice(0, 10);
 
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ items: items }));
           } else {
-            console.error("Alexa API error:", response.statusCode, data);
+            console.error(
+              "Home Assistant API error:",
+              response.statusCode,
+              data,
+            );
             res.writeHead(response.statusCode);
-            res.end(JSON.stringify({ error: "Alexa API error" }));
+            res.end(JSON.stringify({ error: "Home Assistant API error" }));
           }
         });
       })
       .on("error", (err) => {
-        console.error("Alexa API connection error:", err);
+        console.error("Home Assistant API connection error:", err);
         res.writeHead(500);
-        res.end(JSON.stringify({ error: "Alexa API connection error" }));
+        res.end(
+          JSON.stringify({ error: "Home Assistant API connection error" }),
+        );
       });
   } else if (req.url.startsWith("/stocks") && req.method === "GET") {
     // Endpoint for Yahoo Finance Chart API
@@ -200,6 +230,6 @@ server.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`Calendar endpoint: http://localhost:${PORT}/calendar`);
   console.log(
-    `Alexa shopping list endpoint: http://localhost:${PORT}/alexa-shopping-list`,
+    `Home Assistant shopping list endpoint: http://localhost:${PORT}/alexa-shopping-list`,
   );
 });

@@ -25,24 +25,19 @@ services:
     networks:
       - dashboard-network
 
-  # Alexa Shopping List API
-  alexa-api:
-    build:
-      context: ./Alexa-Shopping-List
-      dockerfile: Dockerfile
-    container_name: alexa-api
-    ports:
-      - "8800:8800"
-    volumes:
-      - ./Alexa-Shopping-List/cookie_data:/app/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8800/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
-    networks:
-      - dashboard-network
+  # # Alexa Shopping List API
+  # alexa-shopping-list:
+  #   build:
+  #     context: ./home-assistant-alexa-shopping-list/server
+  #     dockerfile: Dockerfile
+  #   container_name: alexa-shopping-list
+  #   ports:
+  #     - "4000:4000"
+  #   volumes:
+  #     - ./home-assistant-alexa-shopping-list/server/config:/config
+  #   restart: unless-stopped
+  #   networks:
+  #     - dashboard-network
 
 networks:
   dashboard-network:
