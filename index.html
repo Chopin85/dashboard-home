@@ -74,14 +74,24 @@
         </div>
       </div>
 
-      <!-- Shopping Card -->
-      <div class="card shopping-card">
+      <!-- Tasks Card -->
+      <div class="card tasks-card">
+        <div class="card-glow"></div>
+        <div class="card-header">
+          <span class="icon-badge">✓</span>
+          <div class="tasks-title">Tasks</div>
+        </div>
+        <div class="tasks-grid" id="shopping-list"></div>
+      </div>
+
+      <!-- Grocery List Card -->
+      <div class="card grocery-card">
         <div class="card-glow"></div>
         <div class="card-header">
           <span class="icon-badge">🛒</span>
-          <div class="shopping-title">Shopping List</div>
+          <div class="grocery-title">Shopping List</div>
         </div>
-        <div class="shopping-grid" id="shopping-list"></div>
+        <div class="grocery-grid" id="grocery-list"></div>
       </div>
     </div>
 
@@ -496,10 +506,8 @@
       function loadShoppingList() {
         var grid = document.getElementById("shopping-list");
 
-        // Load list from Alexa via proxy
-        fetch(
-          "http://" + window.location.hostname + ":3030/alexa-shopping-list",
-        )
+        // Load tasks from Nextcloud via proxy
+        fetch("http://" + window.location.hostname + ":3030/tasks")
           .then(function (response) {
             return response.json();
           })
@@ -510,7 +518,7 @@
 
             for (var i = 0; i < Math.min(items.length, 10); i++) {
               var div = document.createElement("div");
-              div.className = "shopping-item";
+              div.className = "tasks-item";
               div.textContent = items[i];
               grid.appendChild(div);
             }
@@ -526,7 +534,7 @@
             grid.innerHTML = "";
             for (var i = 0; i < shoppingItems.length; i++) {
               var div = document.createElement("div");
-              div.className = "shopping-item";
+              div.className = "tasks-item";
               div.textContent = shoppingItems[i];
               grid.appendChild(div);
             }
@@ -537,18 +545,58 @@
       updateClock();
       setInterval(updateClock, 1000);
 
+      // Populate grocery list with static data
+      function populateGroceryList() {
+        var grid = document.getElementById("grocery-list");
+
+        // Load grocery list from Nextcloud via proxy
+        fetch("http://" + window.location.hostname + ":3030/grocery")
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            grid.innerHTML = "";
+            var items = data.items || [];
+
+            for (var i = 0; i < items.length; i++) {
+              var div = document.createElement("div");
+              div.className = "grocery-item";
+              div.textContent = items[i];
+              grid.appendChild(div);
+            }
+
+            if (items.length === 0) {
+              grid.innerHTML =
+                '<div style="padding: 20px; text-align: center; opacity: 0.7;">Empty list</div>';
+            }
+          })
+          .catch(function (error) {
+            console.log("Error loading grocery list:", error);
+            // Fallback to static list
+            grid.innerHTML = "";
+            for (var i = 0; i < shoppingItems.length; i++) {
+              var div = document.createElement("div");
+              div.className = "grocery-item";
+              div.textContent = shoppingItems[i];
+              grid.appendChild(div);
+            }
+          });
+      }
+
       // Load configuration and then start other functions
       loadConfig().then(function () {
         loadCalendarEvents();
         updateWeather();
         updateStocks();
         loadShoppingList();
+        populateGroceryList();
 
         // Automatic updates
         setInterval(updateWeather, 600000); // Every 10 minutes
-        setInterval(updateStocks, 600000); // Every 10 minutes
-        setInterval(loadCalendarEvents, 600000); // Every 10 minutes
-        setInterval(loadShoppingList, 300000); // Every 5 minutes
+        setInterval(updateStocks, 300000); // Every 5 minutes
+        setInterval(loadCalendarEvents, 60000); // Every 1 minute
+        setInterval(loadShoppingList, 60000); // Every 1 minute
+        setInterval(populateGroceryList, 60000); // Every 1 minute
       });
     </script>
   </body>
