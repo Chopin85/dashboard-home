@@ -516,7 +516,7 @@
             // The proxy returns {items: ["item1", "item2", ...]}
             var items = data.items || [];
 
-            for (var i = 0; i < Math.min(items.length, 10); i++) {
+            for (var i = 0; i < Math.min(items.length, 15); i++) {
               var div = document.createElement("div");
               div.className = "tasks-item";
               div.textContent = items[i];

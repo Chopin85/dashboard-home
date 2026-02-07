@@ -134,7 +134,7 @@ const server = http.createServer((req, res) => {
             }
 
             res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ items: items.slice(0, 10) }));
+            res.end(JSON.stringify({ items: items.slice(0, 15) }));
           } catch (parseError) {
             console.error("Error parsing tasks:", parseError);
             res.writeHead(500);
