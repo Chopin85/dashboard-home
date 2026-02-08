@@ -208,15 +208,26 @@
         if (hours.length === 1) hours = "0" + hours;
         if (minutes.length === 1) minutes = "0" + minutes;
         if (seconds.length === 1) seconds = "0" + seconds;
-        document.getElementById("time").textContent =
-          hours + ":" + minutes + ":" + seconds;
+
+        var timeElement = document.getElementById("time");
+        var newTime = hours + ":" + minutes + ":" + seconds;
+
+        // Aggiorna solo se cambiato - previene repaint non necessari
+        if (timeElement.textContent !== newTime) {
+          timeElement.textContent = newTime;
+        }
 
         var day = days[now.getDay()];
         var dayNumber = now.getDate();
         var month = months[now.getMonth()];
         var year = now.getFullYear();
-        document.getElementById("date").textContent =
-          day + ", " + dayNumber + " " + month + " " + year;
+        var newDate = day + ", " + dayNumber + " " + month + " " + year;
+
+        var dateElement = document.getElementById("date");
+        // Aggiorna solo se cambiato
+        if (dateElement.textContent !== newDate) {
+          dateElement.textContent = newDate;
+        }
       }
 
       function parseICalDate(dateStr) {
@@ -309,7 +320,7 @@
               return a.date - b.date;
             });
 
-            // Show up to 4 events
+            // Show up to 5 events
             container.innerHTML = "";
             var maxEvents = Math.min(parsedEvents.length, 5);
             for (var j = 0; j < maxEvents; j++) {

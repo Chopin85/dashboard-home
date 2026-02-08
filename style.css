@@ -2,22 +2,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes neonPulse {
-  0%, 100% { text-shadow: 0 0 10px #7dcfff, 0 0 20px #7dcfff, 0 0 30px #7dcfff; }
-  50% { text-shadow: 0 0 20px #7dcfff, 0 0 30px #7dcfff, 0 0 40px #7dcfff, 0 0 50px #7dcfff; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  /* Hardware acceleration per iOS */
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  -webkit-transform: translate3d(0,0,0);
 }
 
 @keyframes slideIn {
@@ -31,11 +19,16 @@
   }
 }
 
+/* Animazione più leggera per il float */
+@keyframes floatLight {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
 body {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-  background: linear-gradient(-45deg, #16161e, #1a1b26, #24283b, #1f2335);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
+  /* Sfondo statico invece del gradient animato - molto più performante */
+  background: #1a1b26;
   color: #c0caf5;
   overflow: hidden;
   height: 100vh;
@@ -43,6 +36,8 @@ body {
   position: fixed;
   top: 0;
   left: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body::before {
@@ -95,7 +90,7 @@ body::before {
   grid-row: 2;
 }
 
-.shopping-card {
+.tasks-card {
   grid-column: 2;
   grid-row: 2;
 }
@@ -118,6 +113,9 @@ body::before {
   position: relative;
   overflow: hidden;
   animation: slideIn 0.6s ease-out;
+  /* Hardware acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .card-glow {
@@ -128,7 +126,8 @@ body::before {
   height: 200%;
   background: radial-gradient(circle, rgba(122, 162, 247, 0.08) 0%, transparent 70%);
   pointer-events: none;
-  animation: float 6s ease-in-out infinite;
+  /* Animazione disabilitata per performance - può essere riattivata se necessario */
+  /* animation: floatLight 6s ease-in-out infinite; */
 }
 
 /* Card Headers */
@@ -161,13 +160,14 @@ body::before {
   align-items: center;
   background: linear-gradient(135deg, rgba(26, 27, 38, 0.9), rgba(31, 35, 53, 0.9));
   animation-delay: 0.1s;
+  padding: 20px 10px;
 }
 
 .time {
-  font-size: 42px;
+  font-size: 64px;
   font-weight: 100;
-  letter-spacing: -2px;
-  margin-bottom: 8px;
+  letter-spacing: -3px;
+  margin-bottom: 12px;
   font-variant-numeric: tabular-nums;
   text-align: center;
   background: linear-gradient(135deg, #7dcfff, #7aa2f7, #7dcfff);
@@ -175,17 +175,22 @@ body::before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 3s ease infinite, neonPulse 2s ease-in-out infinite;
   filter: drop-shadow(0 0 30px rgba(125, 207, 255, 0.6));
+  /* Ottimizzazione per aggiornamenti frequenti */
+  will-change: contents;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* Animazioni disabilitate per evitare flickering */
+  /* animation: gradientShift 3s ease infinite, neonPulse 2s ease-in-out infinite; */
 }
 
 .date {
-  font-size: 11px;
+  font-size: 14px;
   opacity: 0.9;
-  font-weight: 300;
+  font-weight: 400;
   color: #7dcfff;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-shadow: 0 0 10px rgba(125, 207, 255, 0.5);
 }
 
@@ -197,7 +202,7 @@ body::before {
   padding: 6px;
 }
 
-.weather-title, .calendar-title, .stock-title, .shopping-title {
+.weather-title, .calendar-title, .stock-title, .tasks-title, .grocery-title {
   font-size: 14px;
   font-weight: 700;
   color: #7aa2f7;
@@ -232,7 +237,8 @@ body::before {
 
 .weather-icon {
   font-size: 32px;
-  animation: float 3s ease-in-out infinite;
+  /* Animazione leggera opzionale */
+  animation: floatLight 3s ease-in-out infinite;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
@@ -305,28 +311,6 @@ body::before {
   overflow: hidden;
 }
 
-/* === STOCKS CARD === */
-.stock-card {
-  display: flex;
-  flex-direction: column;
-  animation-delay: 0.4s;
-  background: linear-gradient(135deg, rgba(31, 35, 53, 0.9), rgba(36, 40, 59, 0.9));
-}
-
-/* === TASKS CARD === */
-.tasks-card {
-  display: flex;
-  flex-direction: column;
-  animation-delay: 0.5s;
-  background: linear-gradient(135deg, rgba(31, 35, 53, 0.9), rgba(36, 40, 59, 0.9));
-}
-
-.calendar-events {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .event-item {
   background: rgba(187, 154, 247, 0.1);
   padding: 8px 10px;
@@ -361,18 +345,12 @@ body::before {
   color: #c0caf5;
 }
 
+/* === STOCKS CARD === */
 .stock-card {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   animation-delay: 0.4s;
-}
-
-.stock-title {
-  font-size: 16px;
-  opacity: 0.9;
-  color: #00ffff;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 600;
+  background: linear-gradient(135deg, rgba(31, 35, 53, 0.9), rgba(36, 40, 59, 0.9));
 }
 
 .stock-item {
@@ -439,13 +417,12 @@ body::before {
   text-shadow: 0 0 8px rgba(247, 118, 142, 0.5);
 }
 
-.tasks-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #7aa2f7;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(122, 162, 247, 0.5);
+/* === TASKS CARD === */
+.tasks-card {
+  display: flex;
+  flex-direction: column;
+  animation-delay: 0.5s;
+  background: linear-gradient(135deg, rgba(31, 35, 53, 0.9), rgba(36, 40, 59, 0.9));
 }
 
 .tasks-grid {
@@ -476,6 +453,10 @@ body::before {
   min-height: 32px;
   margin-bottom: 6px;
   box-sizing: border-box;
+  /* Prevent column break inside items */
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .tasks-item::before {
@@ -494,15 +475,6 @@ body::before {
   flex-direction: column;
   animation-delay: 0.6s;
   background: linear-gradient(135deg, rgba(31, 35, 53, 0.9), rgba(36, 40, 59, 0.9));
-}
-
-.grocery-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #7aa2f7;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(122, 162, 247, 0.5);
 }
 
 .grocery-grid {
